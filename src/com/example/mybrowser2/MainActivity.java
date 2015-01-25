@@ -12,11 +12,13 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnKeyListener;
+import android.view.ViewGroup.LayoutParams;
 import android.view.animation.Animation;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
@@ -34,6 +36,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
 import android.widget.Toast;
@@ -44,10 +47,11 @@ public class MainActivity extends Activity {
 	final Activity activity = this;
 	// private MyWebView webView;
 	private FoundWebView webView;
-	private EditText netAddress;
+	private MyEditText netAddress;
 	private ImageView openAddress;
-	private LinearLayout layout;
+	private RelativeLayout layout;
 	private LinearLayout addressFrame;
+
 	private ProgressBar pb;
 	private String curUrl;
 	private String curTitle;
@@ -55,6 +59,14 @@ public class MainActivity extends Activity {
 	private ListViewAdapter adapter;
 	List<HistoryItem> items;
 	private Bitmap bmp;
+	private RelativeLayout menubarLayout;
+	private RelativeLayout addressbar;
+	private LinearLayout webViewLayout;
+	
+	private ImageView backward;
+	private ImageView forward;
+	private ImageView home;
+	private ImageView settings;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -82,28 +94,39 @@ public class MainActivity extends Activity {
 							Toast.LENGTH_SHORT).show();
 				}
 				if (webView.getScrollY() == 0) {
-					if (addressFrame.getVisibility() != View.VISIBLE) {
-						addressFrame.setVisibility(View.VISIBLE);
-					}
+//					if (addressFrame.getVisibility() != View.VISIBLE) {
+//						addressFrame.setVisibility(View.VISIBLE);
+//					}
 					// 滑动到顶部，你要做的事····
 					Toast.makeText(getApplicationContext(), "top",
 							Toast.LENGTH_SHORT).show();
 				} else {
-					if (addressFrame.getVisibility() != View.GONE) {
-						addressFrame.setVisibility(View.GONE);
-					}
+//					if (addressFrame.getVisibility() != View.GONE) {
+//						addressFrame.setVisibility(View.GONE);
+//					}
 				}
 			}
 		});
 
-		layout = (LinearLayout) findViewById(R.id.mainLayout);
-		addressFrame = (LinearLayout) findViewById(R.id.addressFrame);
-		netAddress = (EditText) findViewById(R.id.netAddress);
+		layout = (RelativeLayout) findViewById(R.id.mainLayout);
+
+
+		addressbar =  (RelativeLayout) LayoutInflater.from(this).inflate(R.layout.address_bar, null);
+		layout.addView(addressbar);
+		addressFrame = (LinearLayout) addressbar.findViewById(R.id.addressFrame);
+        netAddress = (MyEditText) addressbar.findViewById(R.id.netAddress);
 		netAddress.setSelectAllOnFocus(true);
-		openAddress = (ImageView) findViewById(R.id.open_address);
+		openAddress = (ImageView) addressbar.findViewById(R.id.open_address);
+		//menubarLayout = (LinearLayout) findViewById(R.layout.menubar);
 		// webView = (MyWebView) findViewById(R.id.webview);
 		// webView = new MyWebView(this);
+
 		
+		webViewLayout = (LinearLayout) findViewById(R.id.web_view);
+//		webViewLayout =  (RelativeLayout) LayoutInflater.from(this).inflate(R.layout.webview_layout, null);
+//		RelativeLayout.LayoutParams lp1 = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT);
+//		//lp1.addRule(RelativeLayout.ABOVE, R.id.address_bar);
+//		layout.addView(webViewLayout, lp1);
 		netAddress.setOnEditorActionListener(new OnEditorActionListener() {
 
 			@Override
@@ -124,11 +147,11 @@ public class MainActivity extends Activity {
 			public boolean onKey(View v, int keyCode, KeyEvent event) {
 				if(keyCode == KeyEvent.KEYCODE_DEL) {
 					if (netAddress.length() == 0) {
-						if (layout.findViewById(webView.getId()) != null) {
-							layout.removeView(webView);					
+						if (webViewLayout.findViewById(webView.getId()) != null) {
+							webViewLayout.removeView(webView);					
 						}
-						if (layout.findViewById(list.getId()) == null) {
-							layout.addView(list);
+						if (webViewLayout.findViewById(list.getId()) == null) {
+							webViewLayout.addView(list);
 						}
 					}
 				}
@@ -157,8 +180,19 @@ public class MainActivity extends Activity {
 		list.setAdapter(adapter);
 		//list.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_expandable_list_item_1,data));
 		webView.setId(1002);
-		layout.addView(list);
+		webViewLayout.addView(list);
+		//layout.addView(menubarLayout);
 		//layout.addView(webView);
+		menubarLayout = (RelativeLayout) LayoutInflater.from(this).inflate(R.layout.menubar, null);
+		backward = (ImageView) menubarLayout.findViewById(R.id.backward);
+		forward = (ImageView) menubarLayout.findViewById(R.id.forward);
+		home = (ImageView) menubarLayout.findViewById(R.id.home);
+		settings = (ImageView) menubarLayout.findViewById(R.id.settings);
+		layout.addView(menubarLayout);
+		backward.setOnClickListener(menubarListener);
+		forward.setOnClickListener(menubarListener);
+		home.setOnClickListener(menubarListener);
+		settings.setOnClickListener(menubarListener);
 
 		openAddress.setOnClickListener(new Button.OnClickListener() {
 			public void onClick(View v) {
@@ -179,7 +213,6 @@ public class MainActivity extends Activity {
 						clickEditText.selectAll();
 					}
 					setTitleBarIcon(bmp);
-					//openAddress.setVisibility(View.VISIBLE);
 
 				} else {// 失去焦点
 					// 在这里可以对输入的文本内容进行有效的验证
@@ -212,6 +245,26 @@ public class MainActivity extends Activity {
 		webView.setWebChromeClient(new HelloWebChromeClient());
 	}
 	
+	private View.OnClickListener menubarListener = new View.OnClickListener() {
+		
+		@Override
+		public void onClick(View v) {
+			switch(v.getId()) {
+			case R.id.backward:
+				Toast.makeText(activity, "backward", Toast.LENGTH_SHORT).show();
+				break;
+			case R.id.forward:
+				Toast.makeText(activity, "forward", Toast.LENGTH_SHORT).show();
+				break;
+			case R.id.home:
+				Toast.makeText(activity, "home", Toast.LENGTH_SHORT).show();
+				break;
+			case R.id.settings:
+				Toast.makeText(activity, "settings", Toast.LENGTH_SHORT).show();
+				break;
+			}
+		}
+	};
 	private void setTitleBarIcon(Bitmap leftIcon) {
 		Drawable drawable1 = new BitmapDrawable(leftIcon); 
 		drawable1.setBounds(0, 0, 40, 40);
@@ -227,11 +280,11 @@ public class MainActivity extends Activity {
 			return;
 		}
 		
-		if (layout.findViewById(list.getId()) != null) {
-			layout.removeView(list);
+		if (webViewLayout.findViewById(list.getId()) != null) {
+			webViewLayout.removeView(list);
 		}
-		if (layout.findViewById(webView.getId()) == null) {
-			layout.addView(webView);					
+		if (webViewLayout.findViewById(webView.getId()) == null) {
+			webViewLayout.addView(webView);					
 		}
 		
 		if (URLUtil.isNetworkUrl(url) == true) {
@@ -307,6 +360,13 @@ public class MainActivity extends Activity {
 		public void onReceivedIcon (WebView view, Bitmap icon) {
 			bmp = icon;
 			setTitleBarIcon(bmp);
+			// TODO Auto-generated method stub
+//			if (title != null && !title.isEmpty()) {
+//				curTitle = title;
+//				netAddress.setText(curTitle);
+//			}
+//			super.onReceivedTitle(view, title);
+			//bmp = icon;
 			super.onReceivedIcon(view, icon);
 		}
 		
