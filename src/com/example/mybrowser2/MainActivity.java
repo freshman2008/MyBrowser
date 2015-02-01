@@ -58,7 +58,6 @@ public class MainActivity extends Activity {
 	private ListView list;
 	private ListViewAdapter adapter;
 	List<HistoryItem> items;
-	private Bitmap bmp;
 	private RelativeLayout menubarLayout;
 	private RelativeLayout addressbar;
 	private LinearLayout webViewLayout;
@@ -67,6 +66,8 @@ public class MainActivity extends Activity {
 	private ImageView forward;
 	private ImageView home;
 	private ImageView settings;
+	
+	private Bitmap bmp;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -133,6 +134,7 @@ public class MainActivity extends Activity {
 			public boolean onEditorAction(TextView v, int actionId,
 					KeyEvent event) {
 				if (actionId == EditorInfo.IME_ACTION_GO) {
+					setTitleBarIcon(null, false);
 					String url = netAddress.getText().toString();
 					openUrl(url);
                 }
@@ -196,6 +198,7 @@ public class MainActivity extends Activity {
 
 		openAddress.setOnClickListener(new Button.OnClickListener() {
 			public void onClick(View v) {
+				setTitleBarIcon(null, false);
 				String url = netAddress.getText().toString();
 				openUrl(url);
 			}
@@ -212,7 +215,9 @@ public class MainActivity extends Activity {
 						clickEditText.setText(curUrl);
 						clickEditText.selectAll();
 					}
-					setTitleBarIcon(bmp);
+					setTitleBarIcon(null, true);
+					openAddress.setVisibility(View.VISIBLE);
+					menubarLayout.setVisibility(View.GONE);
 
 				} else {// 失去焦点
 					// 在这里可以对输入的文本内容进行有效的验证
@@ -226,6 +231,7 @@ public class MainActivity extends Activity {
 						netAddress.setText(curTitle);
 					}
 					openAddress.setVisibility(View.GONE);
+					menubarLayout.setVisibility(View.VISIBLE);
 				}
 			}
 		});
@@ -265,14 +271,21 @@ public class MainActivity extends Activity {
 			}
 		}
 	};
-	private void setTitleBarIcon(Bitmap leftIcon) {
-		Drawable drawable1 = new BitmapDrawable(leftIcon); 
-		drawable1.setBounds(0, 0, 40, 40);
-		
-		Drawable drawable2 = getResources().getDrawable(R.drawable.ic_launcher);
-		drawable2.setBounds(0, 0, 40, 40);
-		
-		netAddress.setCompoundDrawables(drawable1, null, drawable2, null);
+	private void setTitleBarIcon(Bitmap leftIcon, boolean flag) {
+
+		if (leftIcon != null) {
+			Drawable drawable1 = new BitmapDrawable(leftIcon); 
+			drawable1.setBounds(0, 0, 40, 40);
+			netAddress.setCompoundDrawables(drawable1, null, null, null);	
+		} else {
+			if (flag) {
+				Drawable drawable2 = getResources().getDrawable(R.drawable.cancel);
+				drawable2.setBounds(0, 0, 40, 40);
+				netAddress.setCompoundDrawables(null, null, drawable2, null);
+			} else {
+				netAddress.setCompoundDrawables(null, null, null, null);
+			}
+		}
 	}
 
 	private void openUrl(String url) {
@@ -359,7 +372,7 @@ public class MainActivity extends Activity {
 		@Override
 		public void onReceivedIcon (WebView view, Bitmap icon) {
 			bmp = icon;
-			setTitleBarIcon(bmp);
+			setTitleBarIcon(icon, false);
 			// TODO Auto-generated method stub
 //			if (title != null && !title.isEmpty()) {
 //				curTitle = title;
