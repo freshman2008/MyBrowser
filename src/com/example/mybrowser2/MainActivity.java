@@ -59,21 +59,22 @@ public class MainActivity extends Activity {
 	private ListViewAdapter adapter;
 	List<HistoryItem> items;
 	private RelativeLayout menubarLayout;
+	private LinearLayout menuLayout;
 	private RelativeLayout addressbar;
 	private LinearLayout webViewLayout;
-	
+
 	private ImageView backward;
 	private ImageView forward;
 	private ImageView home;
 	private ImageView settings;
-	
+
 	private Bitmap bmp;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		WebIconDatabase.getInstance().open(getDir("icons", MODE_PRIVATE).getPath()); 
+		WebIconDatabase.getInstance().open(getDir("icons", MODE_PRIVATE).getPath());
 
 		list = new ListView(this);
 		webView = new FoundWebView(this);
@@ -122,7 +123,7 @@ public class MainActivity extends Activity {
 		// webView = (MyWebView) findViewById(R.id.webview);
 		// webView = new MyWebView(this);
 
-		
+
 		webViewLayout = (LinearLayout) findViewById(R.id.web_view);
 //		webViewLayout =  (RelativeLayout) LayoutInflater.from(this).inflate(R.layout.webview_layout, null);
 //		RelativeLayout.LayoutParams lp1 = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT);
@@ -140,9 +141,9 @@ public class MainActivity extends Activity {
                 }
 				return false;
 			}
-			
+
 		});
-		
+
 		netAddress.setOnKeyListener(new OnKeyListener() {
 
 			@Override
@@ -150,7 +151,7 @@ public class MainActivity extends Activity {
 				if(keyCode == KeyEvent.KEYCODE_DEL) {
 					if (netAddress.length() == 0) {
 						if (webViewLayout.findViewById(webView.getId()) != null) {
-							webViewLayout.removeView(webView);					
+							webViewLayout.removeView(webView);
 						}
 						if (webViewLayout.findViewById(list.getId()) == null) {
 							webViewLayout.addView(list);
@@ -159,15 +160,15 @@ public class MainActivity extends Activity {
 				}
 				return false;
 			}
-			
+
 		});
-		
+
 		pb = (ProgressBar) findViewById(R.id.progressBar1);
-		
+
 		DBManager db = new DBManager(this);
 		items = db.findAll();
 		adapter = new ListViewAdapter(this, items);
-		
+
 		list.setOnItemClickListener(new OnItemClickListener() {
 
 			@Override
@@ -176,7 +177,7 @@ public class MainActivity extends Activity {
 				String url = items.get(arg2).getUrl();
 				openUrl(url);
 			}
-			
+
 		});
 		list.setId(1001);
 		list.setAdapter(adapter);
@@ -186,11 +187,13 @@ public class MainActivity extends Activity {
 		//layout.addView(menubarLayout);
 		//layout.addView(webView);
 		menubarLayout = (RelativeLayout) LayoutInflater.from(this).inflate(R.layout.menubar, null);
+		menuLayout = (LinearLayout) menubarLayout.findViewById(R.id.menubar);
 		backward = (ImageView) menubarLayout.findViewById(R.id.backward);
 		forward = (ImageView) menubarLayout.findViewById(R.id.forward);
 		home = (ImageView) menubarLayout.findViewById(R.id.home);
 		settings = (ImageView) menubarLayout.findViewById(R.id.settings);
 		layout.addView(menubarLayout);
+		menuLayout.setOnClickListener(menubarListener);
 		backward.setOnClickListener(menubarListener);
 		forward.setOnClickListener(menubarListener);
 		home.setOnClickListener(menubarListener);
@@ -250,20 +253,27 @@ public class MainActivity extends Activity {
 		webView.setWebViewClient(new HelloWebViewClient());
 		webView.setWebChromeClient(new HelloWebChromeClient());
 	}
-	
+
 	private View.OnClickListener menubarListener = new View.OnClickListener() {
-		
+
 		@Override
 		public void onClick(View v) {
 			switch(v.getId()) {
 			case R.id.backward:
-				Toast.makeText(activity, "backward", Toast.LENGTH_SHORT).show();
+				if (webView.canGoBack()) {
+					webView.goBack();
+				}
+				//Toast.makeText(activity, "backward", Toast.LENGTH_SHORT).show();
 				break;
 			case R.id.forward:
-				Toast.makeText(activity, "forward", Toast.LENGTH_SHORT).show();
+				if (webView.canGoForward()) {
+					webView.goForward();
+				}
+				//Toast.makeText(activity, "forward", Toast.LENGTH_SHORT).show();
 				break;
 			case R.id.home:
-				Toast.makeText(activity, "home", Toast.LENGTH_SHORT).show();
+				openUrl("www.baidu.com");
+				//Toast.makeText(activity, "home", Toast.LENGTH_SHORT).show();
 				break;
 			case R.id.settings:
 				Toast.makeText(activity, "settings", Toast.LENGTH_SHORT).show();
@@ -274,9 +284,9 @@ public class MainActivity extends Activity {
 	private void setTitleBarIcon(Bitmap leftIcon, boolean flag) {
 
 		if (leftIcon != null) {
-			Drawable drawable1 = new BitmapDrawable(leftIcon); 
+			Drawable drawable1 = new BitmapDrawable(leftIcon);
 			drawable1.setBounds(0, 0, 40, 40);
-			netAddress.setCompoundDrawables(drawable1, null, null, null);	
+			netAddress.setCompoundDrawables(drawable1, null, null, null);
 		} else {
 			if (flag) {
 				Drawable drawable2 = getResources().getDrawable(R.drawable.cancel);
@@ -292,14 +302,14 @@ public class MainActivity extends Activity {
 		if (url == null || url.length() == 0) {
 			return;
 		}
-		
+
 		if (webViewLayout.findViewById(list.getId()) != null) {
 			webViewLayout.removeView(list);
 		}
 		if (webViewLayout.findViewById(webView.getId()) == null) {
-			webViewLayout.addView(webView);					
+			webViewLayout.addView(webView);
 		}
-		
+
 		if (URLUtil.isNetworkUrl(url) == true) {
 			webView.loadUrl(url);
 		} else {
@@ -308,7 +318,7 @@ public class MainActivity extends Activity {
 			url = "http://" + url;
 			webView.loadUrl(url);
 		}
-		
+
 		netAddress.clearFocus();
 	}
 	@Override
@@ -382,7 +392,7 @@ public class MainActivity extends Activity {
 			//bmp = icon;
 			super.onReceivedIcon(view, icon);
 		}
-		
+
 		@Override
 		public void onReceivedTitle(WebView view, String title) {
 			// TODO Auto-generated method stub
@@ -407,13 +417,13 @@ public class MainActivity extends Activity {
 		public void onPageFinished(WebView view, String url) {
 			// TODO Auto-generated method stub
 			curUrl = url;
-			
+
 			WebHistoryItem item = webView.copyBackForwardList().getCurrentItem();
 			if (item != null) {
 				Long tsLong = System.currentTimeMillis()/1000;
 				String ts = tsLong.toString();
 				DBManager db = new DBManager(getApplicationContext());
-				db.add(item.getTitle(), item.getUrl(), ts);				
+				db.add(item.getTitle(), item.getUrl(), ts);
 			}
 
 			super.onPageFinished(view, url);
